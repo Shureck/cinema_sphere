@@ -53,7 +53,13 @@ function createUploadPanel(container, media) {
     testPhotoBtn.classList.remove('active');
   });
 
-  panel.append(fileBtn, fileInput, testPhotoBtn, testGridBtn);
+  const convLink = document.createElement('a');
+  convLink.href = 'converter.html';
+  convLink.className = 'upload-btn';
+  convLink.textContent = '360° → Dome';
+  convLink.style.textDecoration = 'none';
+
+  panel.append(fileBtn, fileInput, testPhotoBtn, testGridBtn, convLink);
   container.appendChild(panel);
 }
 
