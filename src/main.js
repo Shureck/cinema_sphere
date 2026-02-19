@@ -19,10 +19,10 @@ const camera = new THREE.PerspectiveCamera(
   75, window.innerWidth / window.innerHeight, 0.1, 200,
 );
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.08));
-scene.add(new THREE.HemisphereLight(0x8888aa, 0x222222, 0.15));
+scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+scene.add(new THREE.HemisphereLight(0xa0a0b0, 0x404050, 0.6));
 
-const pointLight = new THREE.PointLight(0xffeedd, 0.3, 30);
+const pointLight = new THREE.PointLight(0xffeedd, 0.9, 50);
 pointLight.position.set(0, 2.5, 0);
 scene.add(pointLight);
 

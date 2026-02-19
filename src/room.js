@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { BASE_RADIUS } from './dome.js';
 
-const SEAT_COLOR = 0x3377bb;
-const SEAT_FRAME_COLOR = 0x222228;
+const SEAT_COLOR = 0x4a8acc;
+const SEAT_FRAME_COLOR = 0x353540;
 
 const ROW_COUNT = 8;
 const ROW_Z_START = -10;
@@ -16,9 +16,30 @@ export function createRoom(scene) {
   floorGeom.rotateX(-Math.PI / 2);
   const floor = new THREE.Mesh(
     floorGeom,
-    new THREE.MeshStandardMaterial({ color: 0x141418, roughness: 0.92 }),
+    new THREE.MeshStandardMaterial({ color: 0x2a2a35, roughness: 0.85 }),
   );
   scene.add(floor);
+
+  const wallHeight = 4;
+  const wall = new THREE.Mesh(
+    new THREE.CylinderGeometry(BASE_RADIUS + 2, BASE_RADIUS + 2, wallHeight, 64, 1, true),
+    new THREE.MeshStandardMaterial({
+      color: 0x38384a,
+      roughness: 0.9,
+      side: THREE.BackSide,
+    }),
+  );
+  wall.position.y = wallHeight * 0.5;
+  scene.add(wall);
+
+  const rimGeom = new THREE.TorusGeometry(BASE_RADIUS + 2, 0.04, 8, 64);
+  rimGeom.rotateX(Math.PI / 2);
+  const rim = new THREE.Mesh(
+    rimGeom,
+    new THREE.MeshStandardMaterial({ color: 0x505065, roughness: 0.6 }),
+  );
+  rim.position.y = wallHeight;
+  scene.add(rim);
 
   const cushionGeom = new THREE.BoxGeometry(0.52, 0.07, 0.46);
   const frameGeom   = new THREE.BoxGeometry(0.48, 0.34, 0.44);
