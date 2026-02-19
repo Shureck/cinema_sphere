@@ -126,6 +126,5 @@ function generateDefaultGrid() {
   ctx.fill();
 
   const tex = new THREE.CanvasTexture(cv);
-  tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }

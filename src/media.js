@@ -24,7 +24,6 @@ export function setupMedia(dome) {
     const img = new Image();
     img.onload = () => {
       const tex = new THREE.Texture(img);
-      tex.colorSpace = THREE.SRGBColorSpace;
       tex.needsUpdate = true;
       cleanup();
       dome.setTexture(tex);
@@ -39,7 +38,6 @@ export function setupMedia(dome) {
   function loadImageFromURL(url, name) {
     const loader = new THREE.TextureLoader();
     loader.load(url, (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
       cleanup();
       dome.setTexture(tex);
       dome.setBrightness(1.0);
@@ -60,7 +58,6 @@ export function setupMedia(dome) {
     videoEl.muted = true;
 
     videoTex = new THREE.VideoTexture(videoEl);
-    videoTex.colorSpace = THREE.SRGBColorSpace;
     dome.setTexture(videoTex);
     dome.setBrightness(1.0);
     dome.setGamma(1.0);

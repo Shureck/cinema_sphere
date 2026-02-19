@@ -10,7 +10,7 @@ const canvas   = document.getElementById('dome-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
 const scene  = new THREE.Scene();
 scene.background = new THREE.Color(0x050508);
