@@ -43,6 +43,7 @@ function createUploadPanel(container, media) {
     media.loadImageFromURL('public/test-image.png', 'test-image.png');
     testPhotoBtn.classList.add('active');
     testGridBtn.classList.remove('active');
+    testVideoBtn.classList.remove('active');
   });
 
   const testGridBtn = el('button', 'upload-btn');
@@ -51,9 +52,19 @@ function createUploadPanel(container, media) {
     media.loadImageFromURL('public/test-grid.png', 'test-grid.png');
     testGridBtn.classList.add('active');
     testPhotoBtn.classList.remove('active');
+    testVideoBtn.classList.remove('active');
   });
 
-  panel.append(fileBtn, fileInput, testPhotoBtn, testGridBtn);
+  const testVideoBtn = el('button', 'upload-btn');
+  testVideoBtn.textContent = 'Тестовое видео';
+  testVideoBtn.addEventListener('click', () => {
+    media.loadVideoFromURL('public/Test.mp4', 'Test.mp4');
+    testVideoBtn.classList.add('active');
+    testPhotoBtn.classList.remove('active');
+    testGridBtn.classList.remove('active');
+  });
+
+  panel.append(fileBtn, fileInput, testPhotoBtn, testGridBtn, testVideoBtn);
   container.appendChild(panel);
 }
 

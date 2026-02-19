@@ -47,6 +47,25 @@ export function setupMedia(dome) {
     });
   }
 
+  function loadVideoFromURL(url, name) {
+    cleanup();
+    videoEl = document.createElement('video');
+    videoEl.src = url;
+    videoEl.crossOrigin = 'anonymous';
+    videoEl.loop = true;
+    videoEl.playsInline = true;
+    videoEl.muted = true;
+
+    videoTex = new THREE.VideoTexture(videoEl);
+    dome.setTexture(videoTex);
+    dome.setBrightness(1.0);
+    dome.setGamma(1.0);
+
+    currentType = 'video';
+    videoEl.play().catch(() => {});
+    if (stateCb) stateCb({ type: 'video', name: name || url.split('/').pop() });
+  }
+
   function loadVideo(file) {
     cleanup();
     const url = URL.createObjectURL(file);
@@ -76,6 +95,7 @@ export function setupMedia(dome) {
   return {
     loadFile,
     loadImageFromURL,
+    loadVideoFromURL,
     get type()        { return currentType; },
     get video()       { return videoEl; },
     get paused()      { return videoEl ? videoEl.paused : true; },
