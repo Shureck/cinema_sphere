@@ -7,6 +7,8 @@ const SEAT_FRAME_COLOR = 0x353540;
 const ROW_COUNT = 8;
 const ROW_Z_START = -10;
 const ROW_Z_END = 10;
+const ROW_Y_BACK = 0;      // нижние кресла
+const ROW_Y_FRONT = 3.5;     // верхний ряд (3.5 м)
 const SEATS_PER_ROW_FRONT = 5;
 const SEATS_PER_ROW_BACK = 13;
 const SEAT_SPACING_X = 0.65;
@@ -51,6 +53,7 @@ export function createRoom(scene) {
   for (let ri = 0; ri < ROW_COUNT; ri++) {
     const t = ri / (ROW_COUNT - 1);
     const z = ROW_Z_START + t * (ROW_Z_END - ROW_Z_START);
+    const y = ROW_Y_FRONT + t * (ROW_Y_BACK - ROW_Y_FRONT);
     const count = Math.round(SEATS_PER_ROW_FRONT + t * (SEATS_PER_ROW_BACK - SEATS_PER_ROW_FRONT));
 
     for (let i = 0; i < count; i++) {
@@ -58,7 +61,7 @@ export function createRoom(scene) {
       const x = (u - 0.5) * (count - 1) * SEAT_SPACING_X;
 
       const group = new THREE.Group();
-      group.position.set(x, 0, z);
+      group.position.set(x, y, z);
       group.lookAt(0, 0, -50);
 
       const frameMat = new THREE.MeshStandardMaterial({
@@ -88,7 +91,7 @@ export function createRoom(scene) {
         group,
         hitMeshes: [frame, cushion, back],
         materials: [cushionMat, backMat],
-        position: { x, z },
+        position: { x, y, z },
         row: ri,
         index: idx,
       });

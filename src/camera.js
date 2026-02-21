@@ -12,12 +12,13 @@ export function setupCamera(camera, canvas, seats) {
   const centerSeat = seats[2];
   const startX = centerSeat ? centerSeat.position.x : 0;
   const startZ = centerSeat ? centerSeat.position.z : 0;
+  const startY = centerSeat && centerSeat.position.y != null ? centerSeat.position.y + EYE_HEIGHT : EYE_HEIGHT;
   const startIdx = centerSeat ? centerSeat.index : -1;
 
   let yaw   = DEFAULT_YAW;
   let pitch = 0.5;
-  const targetPos  = new THREE.Vector3(startX, EYE_HEIGHT, startZ);
-  const currentPos = new THREE.Vector3(startX, EYE_HEIGHT, startZ);
+  const targetPos  = new THREE.Vector3(startX, startY, startZ);
+  const currentPos = new THREE.Vector3(startX, startY, startZ);
 
   let currentSeatIdx = startIdx;
 
@@ -165,7 +166,8 @@ export function setupCamera(camera, canvas, seats) {
   }, { passive: true });
 
   function goToSeat(seat) {
-    targetPos.set(seat.position.x, EYE_HEIGHT, seat.position.z);
+    const eyeY = (seat.position.y ?? 0) + EYE_HEIGHT;
+    targetPos.set(seat.position.x, eyeY, seat.position.z);
     currentSeatIdx = seat.index;
     if (seatCb) seatCb(seat.index);
   }
