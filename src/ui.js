@@ -1,7 +1,7 @@
 import { BASE_RADIUS } from './dome.js';
 
 export function setupUI(container, { cameraCtrl, media, room }) {
-  createUploadPanel(container, media);
+  const { updatePublishBtn } = createUploadPanel(container, media);
   initDragDrop(media);
   const vc = createVideoControls(container, media);
   createRightPanel(container, cameraCtrl);
@@ -10,6 +10,7 @@ export function setupUI(container, { cameraCtrl, media, room }) {
 
   media.onStateChange((st) => {
     vc.el.classList.toggle('hidden', st.type !== 'video');
+    updatePublishBtn();
   });
 
   return {
@@ -140,6 +141,7 @@ function createUploadPanel(container, media) {
         }
         prog.hide();
         media.setSourceUrl(publicUrl);
+        updatePublishBtn();
         copyShareLink(publicUrl);
       } catch (e) {
         prog.hide();
@@ -154,9 +156,21 @@ function createUploadPanel(container, media) {
     setTimeout(() => { publishBtn.textContent = prev; }, 2500);
   });
 
+  const updatePublishBtn = () => {
+    if (media.sourceUrl) {
+      publishBtn.textContent = 'Скопировать ссылку';
+      publishBtn.title = 'Скопировать ссылку на сферу с контентом';
+    } else {
+      publishBtn.textContent = 'Опубликовать';
+      publishBtn.title = 'Загрузить на S3 и скопировать ссылку на сферу';
+    }
+  };
+
   panel.append(fileBtn, fileInput, urlBtn, testPhotoBtn, testGridBtn, publishBtn, convLink);
   wrap.append(toggleBtn, panel);
   container.appendChild(wrap);
+  updatePublishBtn();
+  return { updatePublishBtn };
 }
 
 /* ─── Drag & Drop ──────────────────────────────────────── */
