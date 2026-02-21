@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 
-export const BASE_RADIUS = 18;
-export const DOME_HEIGHT = 8;
+// Купол: диаметр 29.4 м, высота 10 м
+export const BASE_RADIUS = 29.4 / 2;  // 14.7 м — радиус по основанию
+export const DOME_HEIGHT = 10;
 export const CURVE_RADIUS =
   (BASE_RADIUS * BASE_RADIUS + DOME_HEIGHT * DOME_HEIGHT) / (2 * DOME_HEIGHT);
 export const HALF_ANGLE = Math.asin(BASE_RADIUS / CURVE_RADIUS);
 export const TILT_DEG = 5;
-export const SPRING_LINE_Y = 4;
+export const SPRING_LINE_Y = DOME_HEIGHT - CURVE_RADIUS;  // база купола на уровне пола
 
 const VERT = /* glsl */ `
   varying vec3 vLocalPos;
@@ -43,10 +44,11 @@ const FRAG = /* glsl */ `
 `;
 
 export function createDome(scene) {
+  const phiMax = Math.acos((CURVE_RADIUS - DOME_HEIGHT) / CURVE_RADIUS);
   const geom = new THREE.SphereGeometry(
-    BASE_RADIUS, 128, 64,
+    CURVE_RADIUS, 128, 64,
     0, Math.PI * 2,
-    0, Math.PI * 0.5
+    0, phiMax
   );
 
   const material = new THREE.ShaderMaterial({

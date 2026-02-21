@@ -106,26 +106,44 @@ function createUploadPanel(container, media) {
         setTimeout(() => { publishBtn.textContent = prev; updatePublishBtn(); }, 1500);
       };
 
-      if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(shareUrl).then(done).catch(tryExecCommand);
-      } else {
-        tryExecCommand();
-      }
-
-      function tryExecCommand() {
+      function execCopy() {
         const ta = document.createElement('textarea');
         ta.value = shareUrl;
-        ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;width:2em;height:2em;padding:0;border:none;outline:none;boxShadow:none;background:transparent;opacity:0.001';
         document.body.appendChild(ta);
+        ta.focus();
         ta.select();
+        ta.setSelectionRange(0, shareUrl.length);
+        let ok = false;
         try {
-          if (document.execCommand('copy')) done();
-          else prompt('Ссылка (скопируйте вручную):', shareUrl);
-        } catch {
-          prompt('Ссылка (скопируйте вручную):', shareUrl);
-        }
+          ok = document.execCommand('copy');
+        } catch (_) {}
         ta.remove();
+        return ok;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(done).catch(() => {
+          if (execCopy()) done();
+          else showCopyFallback(shareUrl);
+        });
+      } else {
+        if (execCopy()) done();
+        else showCopyFallback(shareUrl);
+      }
+
+      function showCopyFallback(url) {
         publishBtn.disabled = false;
+        const div = document.createElement('div');
+        div.className = 'copy-fallback';
+        div.innerHTML = '<div class="copy-fallback-inner"><label>Ссылка:</label><input type="text" readonly value=""><button>Закрыть</button></div>';
+        const input = div.querySelector('input');
+        const btn = div.querySelector('button');
+        input.value = url;
+        input.onclick = () => input.select();
+        btn.onclick = () => div.remove();
+        document.body.appendChild(div);
       }
     };
 
