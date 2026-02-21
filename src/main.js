@@ -34,6 +34,14 @@ const ui         = setupUI(document.getElementById('ui-overlay'), {
   dome, cameraCtrl, media, room,
 });
 
+const params = new URLSearchParams(location.search);
+const mediaUrl = params.get('media');
+if (mediaUrl) {
+  try {
+    media.loadMediaFromURL(decodeURIComponent(mediaUrl));
+  } catch (_) {}
+}
+
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();

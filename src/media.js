@@ -1,10 +1,15 @@
 import * as THREE from 'three';
 
+const VIDEO_EXT = /\.(mp4|webm|mov|ogg|m4v)(\?|$)/i;
+const IMAGE_EXT = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i;
+
 export function setupMedia(dome) {
-  let currentType = null;
-  let videoEl     = null;
-  let videoTex    = null;
-  let stateCb     = null;
+  let currentType     = null;
+  let currentSourceUrl = null;
+  let currentFile     = null;
+  let videoEl         = null;
+  let videoTex        = null;
+  let stateCb         = null;
 
   function cleanup() {
     if (videoEl) {
@@ -20,6 +25,8 @@ export function setupMedia(dome) {
   }
 
   function loadImage(file) {
+    currentSourceUrl = null;
+    currentFile = file;
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
@@ -36,6 +43,8 @@ export function setupMedia(dome) {
   }
 
   function loadImageFromURL(url, name) {
+    currentSourceUrl = url;
+    currentFile = null;
     const loader = new THREE.TextureLoader();
     loader.load(url, (tex) => {
       cleanup();
@@ -48,6 +57,8 @@ export function setupMedia(dome) {
   }
 
   function loadVideoFromURL(url, name) {
+    currentSourceUrl = url;
+    currentFile = null;
     cleanup();
     videoEl = document.createElement('video');
     videoEl.src = url;
@@ -67,6 +78,8 @@ export function setupMedia(dome) {
   }
 
   function loadVideo(file) {
+    currentSourceUrl = null;
+    currentFile = file;
     cleanup();
     const url = URL.createObjectURL(file);
     videoEl = document.createElement('video');
@@ -92,10 +105,21 @@ export function setupMedia(dome) {
     else if (file.type.startsWith('video/')) loadVideo(file);
   }
 
+  function loadMediaFromURL(url) {
+    const name = url.split('/').pop()?.split('?')[0] || url;
+    if (VIDEO_EXT.test(url)) loadVideoFromURL(url, name);
+    else if (IMAGE_EXT.test(url)) loadImageFromURL(url, name);
+    else loadImageFromURL(url, name);
+  }
+
   return {
     loadFile,
     loadImageFromURL,
     loadVideoFromURL,
+    loadMediaFromURL,
+    get sourceUrl() { return currentSourceUrl; },
+    get currentFile() { return currentFile; },
+    setSourceUrl(url) { currentSourceUrl = url; currentFile = null; },
     get type()        { return currentType; },
     get video()       { return videoEl; },
     get paused()      { return videoEl ? videoEl.paused : true; },

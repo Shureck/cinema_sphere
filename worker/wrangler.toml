@@ -1,0 +1,7 @@
+name = "cinema-sphere-presigner"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+# YANDEX_BUCKET - через wrangler secret или переменные
+# YANDEX_REGION - опционально, по умолчанию ru-central1

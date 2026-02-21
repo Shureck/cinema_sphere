@@ -37,6 +37,14 @@ function createUploadPanel(container, media) {
     fileInput.value = '';
   });
 
+  const urlBtn = el('button', 'upload-btn');
+  urlBtn.textContent = 'По URL';
+  urlBtn.title = 'Вставить ссылку на фото/видео (например, из Yandex Object Storage)';
+  urlBtn.addEventListener('click', () => {
+    const url = prompt('Вставьте ссылку на изображение или видео:');
+    if (url && url.trim()) media.loadMediaFromURL(url.trim());
+  });
+
   const testPhotoBtn = el('button', 'upload-btn');
   testPhotoBtn.textContent = 'Тестовое фото';
   testPhotoBtn.addEventListener('click', () => {
@@ -59,7 +67,72 @@ function createUploadPanel(container, media) {
   convLink.textContent = '360° → Dome';
   convLink.style.textDecoration = 'none';
 
-  panel.append(fileBtn, fileInput, testPhotoBtn, testGridBtn, convLink);
+  const publishBtn = el('button', 'upload-btn');
+  publishBtn.textContent = 'Опубликовать';
+  publishBtn.title = 'Загрузить на S3 и скопировать ссылку на сферу';
+  publishBtn.addEventListener('click', async () => {
+    const srcUrl = media.sourceUrl;
+    const file = media.currentFile;
+
+    const copyShareLink = (publicUrl) => {
+      const shareUrl = location.origin + location.pathname + '?media=' + encodeURIComponent(publicUrl);
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        const prev = publishBtn.textContent;
+        publishBtn.textContent = 'Скопировано!';
+        publishBtn.disabled = false;
+        setTimeout(() => { publishBtn.textContent = prev; }, 1500);
+      }).catch(() => {
+        prompt('Ссылка на сферу (скопируйте вручную):', shareUrl);
+        publishBtn.disabled = false;
+      });
+    };
+
+    if (srcUrl) {
+      copyShareLink(srcUrl);
+      return;
+    }
+
+    if (file) {
+      const presignerUrl = import.meta.env.VITE_PRESIGNER_URL;
+      if (!presignerUrl) {
+        publishBtn.textContent = 'Настройте VITE_PRESIGNER_URL';
+        setTimeout(() => { publishBtn.textContent = 'Опубликовать'; }, 2000);
+        return;
+      }
+      publishBtn.disabled = true;
+      publishBtn.textContent = 'Загрузка...';
+      try {
+        const presignRes = await fetch(presignerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' }),
+        });
+        if (!presignRes.ok) {
+          const err = await presignRes.json().catch(() => ({}));
+          throw new Error(err.error || `Presigner: ${presignRes.status}`);
+        }
+        const { putUrl, publicUrl } = await presignRes.json();
+        const putRes = await fetch(putUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        });
+        if (!putRes.ok) throw new Error(`Upload: ${putRes.status}`);
+        media.setSourceUrl(publicUrl);
+        copyShareLink(publicUrl);
+      } catch (e) {
+        publishBtn.textContent = 'Ошибка: ' + (e.message || 'загрузка');
+        setTimeout(() => { publishBtn.textContent = 'Опубликовать'; publishBtn.disabled = false; }, 3000);
+      }
+      return;
+    }
+
+    const prev = publishBtn.textContent;
+    publishBtn.textContent = 'Сначала загрузите файл';
+    setTimeout(() => { publishBtn.textContent = prev; }, 2500);
+  });
+
+  panel.append(fileBtn, fileInput, urlBtn, testPhotoBtn, testGridBtn, publishBtn, convLink);
   container.appendChild(panel);
 }
 

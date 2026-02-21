@@ -30,3 +30,9 @@ python -m http.server 5173
 
 - Изображения: PNG, JPG, WebP
 - Видео: MP4, WebM
+
+## Публикация и S3
+
+- **Опубликовать** — загрузить текущий контент на S3 (если локальный файл) и скопировать ссылку на сферу. Требует развёрнутого [presigner Worker](worker/README.md).
+- **По URL** — вставить ссылку на фото/видео (например, из Yandex Object Storage).
+- Настройка CORS и публичного доступа для Yandex S3: [docs/S3_SETUP.md](docs/S3_SETUP.md)
