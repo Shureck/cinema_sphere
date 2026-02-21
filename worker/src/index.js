@@ -37,18 +37,27 @@ export default {
     const expiresIn = 3600;
     const presignUrl = `${objectUrl}?X-Amz-Expires=${expiresIn}`;
 
-    const client = new AwsClient({
-      accessKeyId,
-      secretAccessKey,
-      service: 's3',
-      region,
-    });
+    let putUrl;
+    try {
+      const client = new AwsClient({
+        accessKeyId,
+        secretAccessKey,
+        service: 's3',
+        region,
+      });
 
-    const signedRequest = await client.sign(new Request(presignUrl, { method: 'PUT' }), {
-      aws: { signQuery: true },
-    });
+      const signedRequest = await client.sign(new Request(presignUrl, { method: 'PUT' }), {
+        aws: { signQuery: true },
+      });
 
-    const putUrl = signedRequest.url;
+      putUrl = signedRequest.url;
+    } catch (err) {
+      return json(
+        { error: 'Sign failed', detail: String(err?.message || err) },
+        500
+      );
+    }
+
     const publicUrl = objectUrl;
 
     return json(
