@@ -36,7 +36,14 @@ const ui         = setupUI(document.getElementById('ui-overlay'), {
   dome, cameraCtrl, media, room,
 });
 
-document.getElementById('ui-overlay').appendChild(VRButton.createButton(renderer));
+// Показывать кнопку VR только при поддержке WebXR (иначе не показывать "VR NOT SUPPORTED")
+if ('xr' in navigator) {
+  navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+    if (supported) {
+      document.getElementById('ui-overlay').appendChild(VRButton.createButton(renderer));
+    }
+  });
+}
 
 const params = new URLSearchParams(location.search);
 const mediaUrl = params.get('media');

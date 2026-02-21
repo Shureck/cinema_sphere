@@ -59,6 +59,16 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 #VRButton{position:absolute!important;top:16px!important;right:16px!important;margin:0!important;padding:8px 14px!important;background:rgba(0,0,0,.6)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)!important;border-radius:10px!important;color:#fff!important;font-size:13px!important;cursor:pointer!important;z-index:10!important}
 #VRButton:hover{background:rgba(0,0,0,.75)!important}
 
+/* ── Fullscreen: скрыть весь UI ─── */
+body.fullscreen-active .upload-panel-wrap,
+body.fullscreen-active .right-panel,
+body.fullscreen-active .fullscreen-btn,
+body.fullscreen-active .seat-map,
+body.fullscreen-active .help-text,
+body.fullscreen-active .video-controls,
+body.fullscreen-active #VRButton{display:none!important}
+body.fullscreen-active .upload-progress-overlay{display:none!important}
+
 /* ══════════════════════════════════════════════════════════ */
 /* ── Converter UI ──────────────────────────────────────── */
 /* ══════════════════════════════════════════════════════════ */

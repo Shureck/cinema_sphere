@@ -284,8 +284,10 @@ function createFullscreenButton(container) {
   btn.setAttribute('aria-label', 'На весь экран');
 
   const updateIcon = () => {
-    btn.innerHTML = document.fullscreenElement ? '&#10005;' : '&#x26F6;';
-    btn.title = document.fullscreenElement ? 'Выйти' : 'На весь экран';
+    const isFs = !!document.fullscreenElement;
+    document.body.classList.toggle('fullscreen-active', isFs);
+    btn.innerHTML = isFs ? '&#10005;' : '&#x26F6;';
+    btn.title = isFs ? 'Выйти' : 'На весь экран';
   };
 
   btn.addEventListener('click', () => {
