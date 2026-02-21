@@ -28,19 +28,26 @@ const pointLight = new THREE.PointLight(0xffeedd, 0.9, 50);
 pointLight.position.set(0, 2.5, 0);
 scene.add(pointLight);
 
-const dome       = createDome(scene);
-const room       = createRoom(scene);
+const xrRig = new THREE.Group();
+scene.add(xrRig);
+
+const dome       = createDome(xrRig);
+const room       = createRoom(xrRig);
+
+renderer.xr.addEventListener('sessionstart', () => { xrRig.rotation.y = Math.PI; });
+renderer.xr.addEventListener('sessionend', () => { xrRig.rotation.y = 0; });
 const cameraCtrl = setupCamera(camera, canvas, room.seats);
 const media      = setupMedia(dome);
 const ui         = setupUI(document.getElementById('ui-overlay'), {
   dome, cameraCtrl, media, room,
 });
 
-// Показывать кнопку VR только при поддержке WebXR (иначе не показывать "VR NOT SUPPORTED")
+// Показывать кнопку VR только при поддержке WebXR, рядом с fullscreen
 if ('xr' in navigator) {
   navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
     if (supported) {
-      document.getElementById('ui-overlay').appendChild(VRButton.createButton(renderer));
+      const slot = document.querySelector('.vr-button-slot');
+      if (slot) slot.appendChild(VRButton.createButton(renderer));
     }
   });
 }

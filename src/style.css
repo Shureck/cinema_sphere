@@ -45,10 +45,12 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .seat-map{position:absolute;left:16px;bottom:16px;width:160px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden;z-index:10;display:flex;flex-direction:column;align-items:center;padding-bottom:6px}
 @media (max-width:1024px){.seat-map{display:none!important}}
 
-/* ── Fullscreen (mobile only) ─── */
-.fullscreen-btn{display:none;position:absolute;bottom:16px;left:16px;width:48px;height:48px;border-radius:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer;z-index:10;align-items:center;justify-content:center}
+/* ── Action buttons (fullscreen + VR) ─── */
+.action-buttons{position:absolute;bottom:16px;left:16px;display:flex;gap:8px;align-items:center;z-index:10}
+.fullscreen-btn{width:48px;height:48px;border-radius:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .fullscreen-btn:hover{background:rgba(0,0,0,.75)}
-@media (max-width:1024px){.fullscreen-btn{display:flex}}
+.vr-button-slot{display:flex;align-items:center}
+.vr-button-slot #VRButton{position:relative!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;margin:0!important}
 .seat-map canvas{width:160px;height:160px;cursor:pointer}
 .minimap-center-btn{margin-top:4px;padding:4px 12px;font-size:11px}
 
@@ -56,17 +58,16 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .help-text{position:absolute;bottom:16px;right:16px;font-size:11px;color:rgba(255,255,255,.3);text-align:right;line-height:1.7;user-select:none;z-index:10}
 
 /* ── WebXR VR Button ─── */
-#VRButton{position:absolute!important;top:16px!important;right:16px!important;margin:0!important;padding:8px 14px!important;background:rgba(0,0,0,.6)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)!important;border-radius:10px!important;color:#fff!important;font-size:13px!important;cursor:pointer!important;z-index:10!important}
+#VRButton{margin:0!important;padding:8px 14px!important;height:48px!important;line-height:48px!important;box-sizing:border-box!important;background:rgba(0,0,0,.6)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)!important;border-radius:12px!important;color:#fff!important;font-size:13px!important;cursor:pointer!important;z-index:10!important}
 #VRButton:hover{background:rgba(0,0,0,.75)!important}
 
 /* ── Fullscreen: скрыть весь UI ─── */
 body.fullscreen-active .upload-panel-wrap,
 body.fullscreen-active .right-panel,
-body.fullscreen-active .fullscreen-btn,
+body.fullscreen-active .action-buttons,
 body.fullscreen-active .seat-map,
 body.fullscreen-active .help-text,
-body.fullscreen-active .video-controls,
-body.fullscreen-active #VRButton{display:none!important}
+body.fullscreen-active .video-controls{display:none!important}
 body.fullscreen-active .upload-progress-overlay{display:none!important}
 
 /* ══════════════════════════════════════════════════════════ */

@@ -5,7 +5,7 @@ export function setupUI(container, { cameraCtrl, media, room }) {
   initDragDrop(media);
   const vc = createVideoControls(container, media);
   createRightPanel(container, cameraCtrl);
-  createFullscreenButton(container);
+  createActionButtons(container);
   const mm = createMinimap(container, room, cameraCtrl);
   createHelpText(container);
 
@@ -275,22 +275,23 @@ function createVideoControls(container, media) {
   };
 }
 
-/* ─── Fullscreen (mobile) ───────────────────────────────── */
+/* ─── Fullscreen + VR (кнопки рядом) ─────────────────────── */
 
-function createFullscreenButton(container) {
-  const btn = el('button', 'fullscreen-btn');
-  btn.innerHTML = '&#x26F6;';
-  btn.title = 'На весь экран';
-  btn.setAttribute('aria-label', 'На весь экран');
+function createActionButtons(container) {
+  const wrap = el('div', 'action-buttons');
+  const fullscreenBtn = el('button', 'fullscreen-btn');
+  fullscreenBtn.innerHTML = '&#x26F6;';
+  fullscreenBtn.title = 'На весь экран';
+  fullscreenBtn.setAttribute('aria-label', 'На весь экран');
 
   const updateIcon = () => {
     const isFs = !!document.fullscreenElement;
     document.body.classList.toggle('fullscreen-active', isFs);
-    btn.innerHTML = isFs ? '&#10005;' : '&#x26F6;';
-    btn.title = isFs ? 'Выйти' : 'На весь экран';
+    fullscreenBtn.innerHTML = isFs ? '&#10005;' : '&#x26F6;';
+    fullscreenBtn.title = isFs ? 'Выйти' : 'На весь экран';
   };
 
-  btn.addEventListener('click', () => {
+  fullscreenBtn.addEventListener('click', () => {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     } else {
@@ -299,7 +300,11 @@ function createFullscreenButton(container) {
   });
   document.addEventListener('fullscreenchange', updateIcon);
 
-  container.appendChild(btn);
+  const vrSlot = el('div', 'vr-button-slot');
+
+  wrap.append(fullscreenBtn, vrSlot);
+  container.appendChild(wrap);
+  return vrSlot;
 }
 
 /* ─── Right Panel (FOV) ────────────────────────────────── */
