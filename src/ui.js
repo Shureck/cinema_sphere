@@ -5,6 +5,7 @@ export function setupUI(container, { cameraCtrl, media, room }) {
   initDragDrop(media);
   const vc = createVideoControls(container, media);
   createRightPanel(container, cameraCtrl);
+  createFullscreenButton(container);
   const mm = createMinimap(container, room, cameraCtrl);
   createHelpText(container);
 
@@ -272,6 +273,31 @@ function createVideoControls(container, media) {
       playBtn.textContent = media.paused ? '\u25B6' : '\u23F8';
     },
   };
+}
+
+/* ─── Fullscreen (mobile) ───────────────────────────────── */
+
+function createFullscreenButton(container) {
+  const btn = el('button', 'fullscreen-btn');
+  btn.innerHTML = '&#x26F6;';
+  btn.title = 'На весь экран';
+  btn.setAttribute('aria-label', 'На весь экран');
+
+  const updateIcon = () => {
+    btn.innerHTML = document.fullscreenElement ? '&#10005;' : '&#x26F6;';
+    btn.title = document.fullscreenElement ? 'Выйти' : 'На весь экран';
+  };
+
+  btn.addEventListener('click', () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  });
+  document.addEventListener('fullscreenchange', updateIcon);
+
+  container.appendChild(btn);
 }
 
 /* ─── Right Panel (FOV) ────────────────────────────────── */

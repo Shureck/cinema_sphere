@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { createDome } from './dome.js';
 import { createRoom } from './room.js';
 import { setupCamera } from './camera.js';
@@ -8,6 +9,7 @@ import { setupUI } from './ui.js';
 
 const canvas   = document.getElementById('dome-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.xr.enabled = true;
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
@@ -34,6 +36,8 @@ const ui         = setupUI(document.getElementById('ui-overlay'), {
   dome, cameraCtrl, media, room,
 });
 
+document.getElementById('ui-overlay').appendChild(VRButton.createButton(renderer));
+
 const params = new URLSearchParams(location.search);
 const mediaUrl = params.get('media');
 if (mediaUrl) {
@@ -48,10 +52,10 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-(function animate() {
-  requestAnimationFrame(animate);
+function animate() {
   cameraCtrl.update();
   media.update();
   ui.update();
   renderer.render(scene, camera);
-})();
+}
+renderer.setAnimationLoop(animate);

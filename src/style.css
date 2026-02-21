@@ -44,11 +44,20 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 /* ── Seat Minimap ─── */
 .seat-map{position:absolute;left:16px;bottom:16px;width:160px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden;z-index:10;display:flex;flex-direction:column;align-items:center;padding-bottom:6px}
 @media (max-width:1024px){.seat-map{display:none!important}}
+
+/* ── Fullscreen (mobile only) ─── */
+.fullscreen-btn{display:none;position:absolute;bottom:16px;left:16px;width:48px;height:48px;border-radius:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer;z-index:10;align-items:center;justify-content:center}
+.fullscreen-btn:hover{background:rgba(0,0,0,.75)}
+@media (max-width:1024px){.fullscreen-btn{display:flex}}
 .seat-map canvas{width:160px;height:160px;cursor:pointer}
 .minimap-center-btn{margin-top:4px;padding:4px 12px;font-size:11px}
 
 /* ── Help Text ─── */
 .help-text{position:absolute;bottom:16px;right:16px;font-size:11px;color:rgba(255,255,255,.3);text-align:right;line-height:1.7;user-select:none;z-index:10}
+
+/* ── WebXR VR Button ─── */
+#VRButton{position:absolute!important;top:16px!important;right:16px!important;margin:0!important;padding:8px 14px!important;background:rgba(0,0,0,.6)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)!important;border-radius:10px!important;color:#fff!important;font-size:13px!important;cursor:pointer!important;z-index:10!important}
+#VRButton:hover{background:rgba(0,0,0,.75)!important}
 
 /* ══════════════════════════════════════════════════════════ */
 /* ── Converter UI ──────────────────────────────────────── */
