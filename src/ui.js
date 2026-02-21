@@ -23,7 +23,28 @@ export function setupUI(container, { cameraCtrl, media, room }) {
 /* ─── Upload Panel ─────────────────────────────────────── */
 
 function createUploadPanel(container, media) {
+  const wrap = el('div', 'upload-panel-wrap');
+  const toggleBtn = el('button', 'upload-panel-toggle');
+  toggleBtn.innerHTML = '&#9776;';
+  toggleBtn.title = 'Меню';
+  toggleBtn.setAttribute('aria-label', 'Меню');
+
   const panel = el('div', 'upload-panel');
+  panel.classList.add('upload-panel-dropdown');
+
+  let open = false;
+  const toggle = () => {
+    open = !open;
+    panel.classList.toggle('open', open);
+  };
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggle();
+  });
+  document.addEventListener('click', () => {
+    if (open) { open = false; panel.classList.remove('open'); }
+  });
+  panel.addEventListener('click', (e) => e.stopPropagation());
 
   const fileBtn = el('button', 'upload-btn');
   fileBtn.textContent = 'Загрузить файл';
@@ -100,7 +121,7 @@ function createUploadPanel(container, media) {
         return;
       }
       publishBtn.disabled = true;
-      publishBtn.textContent = 'Загрузка...';
+      const prog = showUploadProgress();
       try {
         const presignRes = await fetch(presignerUrl, {
           method: 'POST',
@@ -112,15 +133,13 @@ function createUploadPanel(container, media) {
           throw new Error(err.error || `Presigner: ${presignRes.status}`);
         }
         const { putUrl, publicUrl } = await presignRes.json();
-        const putRes = await fetch(putUrl, {
-          method: 'PUT',
-          body: file,
-          headers: { 'Content-Type': file.type || 'application/octet-stream' },
-        });
-        if (!putRes.ok) throw new Error(`Upload: ${putRes.status}`);
+        prog.setText('Загрузка на S3...');
+        await uploadWithProgress(putUrl, file, file.type || 'application/octet-stream', prog.setPercent);
+        prog.hide();
         media.setSourceUrl(publicUrl);
         copyShareLink(publicUrl);
       } catch (e) {
+        prog.hide();
         publishBtn.textContent = 'Ошибка: ' + (e.message || 'загрузка');
         setTimeout(() => { publishBtn.textContent = 'Опубликовать'; publishBtn.disabled = false; }, 3000);
       }
@@ -133,7 +152,8 @@ function createUploadPanel(container, media) {
   });
 
   panel.append(fileBtn, fileInput, urlBtn, testPhotoBtn, testGridBtn, publishBtn, convLink);
-  container.appendChild(panel);
+  wrap.append(toggleBtn, panel);
+  container.appendChild(wrap);
 }
 
 /* ─── Drag & Drop ──────────────────────────────────────── */
@@ -332,6 +352,46 @@ function createHelpText(container) {
     'Клик по креслу — переход',
   ].join('<br>');
   container.appendChild(div);
+}
+
+/* ─── Upload Progress ──────────────────────────────────── */
+
+function showUploadProgress() {
+  const overlay = el('div', 'upload-progress-overlay');
+  const label = el('div', 'upload-progress-label');
+  label.textContent = 'Подготовка...';
+  const bar = document.createElement('div');
+  bar.className = 'upload-progress-bar';
+  const fill = document.createElement('div');
+  fill.className = 'upload-progress-fill';
+  bar.appendChild(fill);
+  overlay.append(label, bar);
+  document.getElementById('ui-overlay').appendChild(overlay);
+
+  return {
+    setText(t) { label.textContent = t; },
+    setPercent(p) { fill.style.width = Math.min(100, Math.max(0, p)) + '%'; },
+    hide() { overlay.remove(); },
+  };
+}
+
+function uploadWithProgress(url, file, contentType, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Type', contentType);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress((e.loaded / e.total) * 100);
+      else onProgress(50);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Upload: ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(file);
+  });
 }
 
 /* ─── Helpers ──────────────────────────────────────────── */
