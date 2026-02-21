@@ -7,8 +7,8 @@ export const CURVE_RADIUS =
   (BASE_RADIUS * BASE_RADIUS + DOME_HEIGHT * DOME_HEIGHT) / (2 * DOME_HEIGHT);
 export const HALF_ANGLE = Math.asin(BASE_RADIUS / CURVE_RADIUS);
 
-const FRONT_EDGE_Y = 1.8;
-const BACK_EDGE_Y = 6.4;
+const BACK_EDGE_Y = 1.8;
+const FRONT_EDGE_Y = 6.4;
 const BASE_CENTER_Y = (FRONT_EDGE_Y + BACK_EDGE_Y) / 2;  // 4.1 м
 // Наклон: sin(tilt) = (задний - передний) / (2 * радиус)
 export const TILT_DEG = -(180 / Math.PI) * Math.asin((BACK_EDGE_Y - FRONT_EDGE_Y) / (2 * BASE_RADIUS));
@@ -28,6 +28,7 @@ const FRAG = /* glsl */ `
   uniform sampler2D domeTexture;
   uniform float brightness;
   uniform float gamma;
+  uniform float maxTheta;
   varying vec3 vLocalPos;
 
   void main() {
@@ -35,7 +36,7 @@ const FRAG = /* glsl */ `
     float theta = acos(clamp(dir.y, -1.0, 1.0));
     float phi   = atan(dir.x, -dir.z);
 
-    float r = clamp(theta / (PI * 0.5), 0.0, 1.0);
+    float r = clamp(theta / maxTheta, 0.0, 1.0);
 
     vec2 uv = vec2(
       0.5 - r * 0.5 * sin(phi),
@@ -62,6 +63,7 @@ export function createDome(scene) {
       domeTexture: { value: generateDefaultGrid() },
       brightness:  { value: 1.2 },
       gamma:       { value: 1.15 },
+      maxTheta:    { value: phiMax },
     },
     vertexShader:   VERT,
     fragmentShader: FRAG,
