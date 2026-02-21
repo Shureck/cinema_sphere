@@ -1,13 +1,19 @@
 import * as THREE from 'three';
 
-// Купол: диаметр 29.4 м, высота 10 м
+// Купол: диаметр 29.4 м, высота 10 м. Передний край 1.8 м, задний 6.4 м.
 export const BASE_RADIUS = 29.4 / 2;  // 14.7 м — радиус по основанию
 export const DOME_HEIGHT = 10;
 export const CURVE_RADIUS =
   (BASE_RADIUS * BASE_RADIUS + DOME_HEIGHT * DOME_HEIGHT) / (2 * DOME_HEIGHT);
 export const HALF_ANGLE = Math.asin(BASE_RADIUS / CURVE_RADIUS);
-export const TILT_DEG = 5;
-export const SPRING_LINE_Y = DOME_HEIGHT - CURVE_RADIUS;  // база купола на уровне пола
+
+const FRONT_EDGE_Y = 1.8;
+const BACK_EDGE_Y = 6.4;
+const BASE_CENTER_Y = (FRONT_EDGE_Y + BACK_EDGE_Y) / 2;  // 4.1 м
+// Наклон: sin(tilt) = (задний - передний) / (2 * радиус)
+export const TILT_DEG = -(180 / Math.PI) * Math.asin((BACK_EDGE_Y - FRONT_EDGE_Y) / (2 * BASE_RADIUS));
+const R_MINUS_H = CURVE_RADIUS - DOME_HEIGHT;
+export const SPRING_LINE_Y = BASE_CENTER_Y - R_MINUS_H * Math.cos((TILT_DEG * Math.PI) / 180);
 
 const VERT = /* glsl */ `
   varying vec3 vLocalPos;
