@@ -9,7 +9,8 @@ const MAX_FOV = 120;
 const LERP_SPEED  = 0.07;
 
 export function setupCamera(camera, canvas, seats) {
-  const centerSeat = seats[2];
+  const row6 = seats.filter((s) => s.row === 1);
+  const centerSeat = row6.length === 6 ? row6[2] : seats[0];
   const startX = centerSeat ? centerSeat.position.x : 0;
   const startZ = centerSeat ? centerSeat.position.z : 0;
   const startY = centerSeat && centerSeat.position.y != null ? centerSeat.position.y + EYE_HEIGHT : EYE_HEIGHT;
