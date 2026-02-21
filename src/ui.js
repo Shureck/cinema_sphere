@@ -98,15 +98,34 @@ function createUploadPanel(container, media) {
 
     const copyShareLink = (publicUrl) => {
       const shareUrl = location.origin + location.pathname + '?media=' + encodeURIComponent(publicUrl);
-      navigator.clipboard.writeText(shareUrl).then(() => {
+      const done = () => {
         const prev = publishBtn.textContent;
         publishBtn.textContent = 'Скопировано!';
         publishBtn.disabled = false;
-        setTimeout(() => { publishBtn.textContent = prev; }, 1500);
-      }).catch(() => {
-        prompt('Ссылка на сферу (скопируйте вручную):', shareUrl);
+        setTimeout(() => { publishBtn.textContent = prev; updatePublishBtn(); }, 1500);
+      };
+
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(done).catch(tryExecCommand);
+      } else {
+        tryExecCommand();
+      }
+
+      function tryExecCommand() {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          if (document.execCommand('copy')) done();
+          else prompt('Ссылка (скопируйте вручную):', shareUrl);
+        } catch {
+          prompt('Ссылка (скопируйте вручную):', shareUrl);
+        }
+        ta.remove();
         publishBtn.disabled = false;
-      });
+      }
     };
 
     if (srcUrl) {
