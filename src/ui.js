@@ -123,18 +123,21 @@ function createUploadPanel(container, media) {
       publishBtn.disabled = true;
       const prog = showUploadProgress();
       try {
-        const presignRes = await fetch(presignerUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' }),
-        });
-        if (!presignRes.ok) {
-          const err = await presignRes.json().catch(() => ({}));
-          throw new Error(err.error || `Presigner: ${presignRes.status}`);
-        }
-        const { putUrl, publicUrl } = await presignRes.json();
+        const { putUrl, publicUrl } = await presignWithRetry(presignerUrl, file.name, file.type || 'application/octet-stream', prog.setText);
         prog.setText('Загрузка на S3...');
-        await uploadWithProgress(putUrl, file, file.type || 'application/octet-stream', prog.setPercent);
+        prog.setPercent(0);
+        let uploaded = false;
+        for (let attempt = 0; attempt < 3 && !uploaded; attempt++) {
+          try {
+            await uploadWithProgress(putUrl, file, file.type || 'application/octet-stream', prog.setPercent);
+            uploaded = true;
+          } catch (e) {
+            if (attempt === 2) throw new Error('S3: ' + (e.message || 'CORS или сеть'));
+            prog.setText(`Повтор загрузки ${attempt + 2}/3...`);
+            prog.setPercent(0);
+            await new Promise(r => setTimeout(r, 1500));
+          }
+        }
         prog.hide();
         media.setSourceUrl(publicUrl);
         copyShareLink(publicUrl);
@@ -352,6 +355,50 @@ function createHelpText(container) {
     'Клик по креслу — переход',
   ].join('<br>');
   container.appendChild(div);
+}
+
+/* ─── Presign (XHR для стабильности при QUIC сбоях) ─────── */
+
+function presignWithRetry(url, filename, contentType, setStatus) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ filename, contentType });
+    const tryReq = (attempt) => {
+      setStatus(attempt ? `Повтор ${attempt}/3...` : 'Подготовка...');
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.putUrl && data.publicUrl) resolve(data);
+            else reject(new Error(data.error || 'Нет putUrl'));
+          } catch {
+            reject(new Error('Неверный ответ'));
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.error || `Presigner: ${xhr.status}`));
+          } catch {
+            reject(new Error(`Presigner: ${xhr.status}`));
+          }
+        }
+      };
+      xhr.onerror = () => {
+        if (attempt < 3) setTimeout(() => tryReq(attempt + 1), 1200);
+        else reject(new Error('Сеть не отвечает (connection reset)'));
+      };
+      xhr.ontimeout = () => {
+        if (attempt < 3) setTimeout(() => tryReq(attempt + 1), 1200);
+        else reject(new Error('Таймаут'));
+      };
+      xhr.timeout = 15000;
+      xhr.send(body);
+    };
+    tryReq(1);
+  });
 }
 
 /* ─── Upload Progress ──────────────────────────────────── */
