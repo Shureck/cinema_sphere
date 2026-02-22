@@ -5,7 +5,7 @@ const SENSITIVITY  = 0.003;
 const FRONT_YAW    = 0;
 const DEFAULT_YAW  = Math.PI;
 const MIN_FOV = 30;
-const MAX_FOV = 120;
+const MAX_FOV = 90;
 const LERP_SPEED  = 0.07;
 
 export function setupCamera(camera, canvas, seats) {
@@ -201,6 +201,71 @@ export function setupCamera(camera, canvas, seats) {
     get currentSeat() { return currentSeatIdx; },
     onFovChange(cb)  { fovCb  = cb; },
     onSeatChange(cb) { seatCb = cb; },
+  };
+}
+
+/** Камера для конвертера: без кресел, центр купола */
+export function setupConverterCamera(camera, canvas) {
+  const startY = 3.5;
+  const targetPos  = new THREE.Vector3(0, startY, 0);
+  const currentPos = new THREE.Vector3(0, startY, 0);
+  let yaw   = DEFAULT_YAW;
+  let pitch = 0.3;
+  let isDragging = false;
+  const prev = { x: 0, y: 0 };
+  let fovCb = null;
+
+  camera.position.copy(currentPos);
+  camera.rotation.order = 'YXZ';
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    isDragging = true;
+    prev.x = e.clientX;
+    prev.y = e.clientY;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - prev.x;
+    const dy = e.clientY - prev.y;
+    yaw   -= dx * SENSITIVITY;
+    pitch -= dy * SENSITIVITY;
+    pitch  = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+    prev.x = e.clientX;
+    prev.y = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+    canvas.style.cursor = 'grab';
+  });
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    camera.fov = clamp(camera.fov + e.deltaY * 0.05, MIN_FOV, MAX_FOV);
+    camera.updateProjectionMatrix();
+    if (fovCb) fovCb(camera.fov);
+  }, { passive: false });
+
+  function update() {
+    currentPos.lerp(targetPos, 0.1);
+    camera.position.copy(currentPos);
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+  }
+
+  return {
+    update,
+    goToSeat: () => {},
+    goToCenter: () => { targetPos.set(0, startY, 0); },
+    setFov(fov) { camera.fov = clamp(fov, MIN_FOV, MAX_FOV); camera.updateProjectionMatrix(); },
+    getFov: () => camera.fov,
+    getPosition: () => ({ x: currentPos.x, z: currentPos.z }),
+    get currentSeat() { return -1; },
+    onFovChange(cb) { fovCb = cb; },
+    onSeatChange: () => {},
   };
 }
 

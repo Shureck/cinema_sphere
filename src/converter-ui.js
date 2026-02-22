@@ -57,9 +57,10 @@ function createControlPanel(container, dome) {
   });
   panel.appendChild(pitchGroup.el);
 
+  const defaultFovDeg = Math.round((dome.getDefaultFov?.() ?? Math.PI) * 180 / Math.PI);
   const fovGroup = sliderGroup({
     label: 'FOV купола',
-    min: 60, max: 300, step: 1, value: 180, suffix: '°',
+    min: 60, max: 180, step: 1, value: defaultFovDeg, suffix: '°',
     onChange(v) { dome.setFov(v * Math.PI / 180); },
   });
   panel.appendChild(fovGroup.el);
@@ -72,7 +73,7 @@ function createControlPanel(container, dome) {
     fovGroup.reset();
     dome.setYaw(0);
     dome.setPitch(0);
-    dome.setFov(Math.PI);
+    dome.setFov(dome.getDefaultFov?.() ?? Math.PI);
   });
   panel.appendChild(resetBtn);
 

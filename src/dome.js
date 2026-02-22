@@ -15,6 +15,12 @@ export const TILT_DEG = -(180 / Math.PI) * Math.asin((BACK_EDGE_Y - FRONT_EDGE_Y
 const R_MINUS_H = CURVE_RADIUS - DOME_HEIGHT;
 export const SPRING_LINE_Y = BASE_CENTER_Y - R_MINUS_H * Math.cos((TILT_DEG * Math.PI) / 180);
 
+// Точный угол раскрытия купола
+export const DOME_PHI_MAX = Math.acos((CURVE_RADIUS - DOME_HEIGHT) / CURVE_RADIUS);
+// Domemaster 180° покрывает полусферу; наш купол покрывает только DOME_PHI_MAX
+// fitScale = 1.0 — текстура ровно вписана в купол
+export const DOME_FIT_SCALE = 1.0;
+
 const VERT = /* glsl */ `
   varying vec3 vLocalPos;
   void main() {
@@ -23,12 +29,15 @@ const VERT = /* glsl */ `
   }
 `;
 
+/* ─── FRAG: domemaster / fish-eye ─────────────────────────── */
+
 const FRAG = /* glsl */ `
   #define PI 3.14159265359
   uniform sampler2D domeTexture;
   uniform float brightness;
   uniform float gamma;
   uniform float maxTheta;
+  uniform float fitScale;
   varying vec3 vLocalPos;
 
   void main() {
@@ -36,11 +45,23 @@ const FRAG = /* glsl */ `
     float theta = acos(clamp(dir.y, -1.0, 1.0));
     float phi   = atan(dir.x, -dir.z);
 
-    float r = clamp(theta / maxTheta, 0.0, 1.0);
+    float r = theta / maxTheta;
+
+    if (r > 1.0) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
+    }
+
+    float r_tex = r * fitScale;
+
+    if (r_tex > 1.0) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
+    }
 
     vec2 uv = vec2(
-      0.5 - r * 0.5 * sin(phi),
-      0.5 + r * 0.5 * cos(phi)
+      0.5 - r_tex * 0.5 * sin(phi),
+      0.5 + r_tex * 0.5 * cos(phi)
     );
 
     vec4 c = texture2D(domeTexture, uv);
@@ -50,12 +71,74 @@ const FRAG = /* glsl */ `
   }
 `;
 
+/* ─── EQUIRECT_FRAG: 360° панорама ────────────────────────── */
+
+const EQUIRECT_FRAG = /* glsl */ `
+  #define PI 3.14159265359
+  uniform sampler2D panorama;
+  uniform float yaw;
+  uniform float pitch;
+  uniform float domeFov;
+  uniform float maxTheta;
+  uniform float fitScale;
+  uniform float brightness;
+  uniform float gamma;
+  varying vec3 vLocalPos;
+
+  mat3 rotY(float a) {
+    float s = sin(a), c = cos(a);
+    return mat3(c, 0.0, -s, 0.0, 1.0, 0.0, s, 0.0, c);
+  }
+  mat3 rotX(float a) {
+    float s = sin(a), c = cos(a);
+    return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c);
+  }
+
+  void main() {
+    vec3 dir = normalize(vLocalPos);
+    float theta = acos(clamp(dir.y, -1.0, 1.0));
+    float phi   = atan(dir.x, -dir.z) + PI;
+
+    float r = theta / maxTheta;
+
+    if (r > 1.0) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
+    }
+
+    float r_tex = r * fitScale;
+
+    if (r_tex > 1.0) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
+    }
+
+    float scaledTheta = r_tex * domeFov;
+
+    vec3 d = vec3(
+      sin(scaledTheta) * sin(phi),
+      cos(scaledTheta),
+      -sin(scaledTheta) * cos(phi)
+    );
+
+    vec3 rd = rotY(yaw) * rotX(pitch) * d;
+
+    float ePhi   = atan(rd.x, -rd.z);
+    float eTheta = acos(clamp(rd.y, -1.0, 1.0));
+    vec2 uv = vec2(ePhi / (2.0 * PI) + 0.5, 1.0 - eTheta / PI);
+
+    vec4 c = texture2D(panorama, uv);
+    vec3 rgb = clamp(c.rgb * brightness, 0.0, 1.0);
+    rgb = pow(rgb, vec3(1.0 / gamma));
+    gl_FragColor = vec4(rgb, c.a);
+  }
+`;
+
 export function createDome(scene) {
-  const phiMax = Math.acos((CURVE_RADIUS - DOME_HEIGHT) / CURVE_RADIUS);
   const geom = new THREE.SphereGeometry(
     CURVE_RADIUS, 128, 64,
     0, Math.PI * 2,
-    0, phiMax
+    0, DOME_PHI_MAX
   );
 
   const material = new THREE.ShaderMaterial({
@@ -63,7 +146,8 @@ export function createDome(scene) {
       domeTexture: { value: generateDefaultGrid() },
       brightness:  { value: 1.2 },
       gamma:       { value: 1.15 },
-      maxTheta:    { value: phiMax },
+      maxTheta:    { value: DOME_PHI_MAX },
+      fitScale:    { value: DOME_FIT_SCALE },
     },
     vertexShader:   VERT,
     fragmentShader: FRAG,
@@ -90,107 +174,17 @@ export function createDome(scene) {
     setGamma(v) {
       material.uniforms.gamma.value = v;
     },
+    setFitScale(v) {
+      material.uniforms.fitScale.value = v;
+    },
   };
-}
-
-/* ─── Equirectangular → Domemaster shader ───────────────── */
-
-const EQUIRECT_FRAG = /* glsl */ `
-  #define PI 3.14159265359
-  uniform sampler2D panorama;
-  uniform float yaw;
-  uniform float pitch;
-  uniform float domeFov;
-  uniform float brightness;
-  uniform float gamma;
-  varying vec3 vLocalPos;
-
-  mat3 rotY(float a) {
-    float s = sin(a), c = cos(a);
-    return mat3(c, 0.0, -s, 0.0, 1.0, 0.0, s, 0.0, c);
-  }
-  mat3 rotX(float a) {
-    float s = sin(a), c = cos(a);
-    return mat3(1.0, 0.0, 0.0, 0.0, c, s, 0.0, -s, c);
-  }
-
-  void main() {
-    vec3 dir = normalize(vLocalPos);
-    float theta = acos(clamp(dir.y, -1.0, 1.0));
-    float phi   = atan(dir.x, -dir.z) + PI;
-
-    float scaledTheta = theta * domeFov / PI;
-
-    vec3 d = vec3(
-      sin(scaledTheta) * sin(phi),
-      cos(scaledTheta),
-      -sin(scaledTheta) * cos(phi)
-    );
-
-    vec3 rd = rotY(yaw) * rotX(pitch) * d;
-
-    float ePhi   = atan(rd.x, -rd.z);
-    float eTheta = acos(clamp(rd.y, -1.0, 1.0));
-    vec2 uv = vec2(ePhi / (2.0 * PI) + 0.5, 1.0 - eTheta / PI);
-
-    vec4 c = texture2D(panorama, uv);
-    vec3 rgb = clamp(c.rgb * brightness, 0.0, 1.0);
-    rgb = pow(rgb, vec3(1.0 / gamma));
-    gl_FragColor = vec4(rgb, c.a);
-  }
-`;
-
-function generateEquirectDefault() {
-  const w = 2048;
-  const h = 1024;
-  const cv = document.createElement('canvas');
-  cv.width = w;
-  cv.height = h;
-  const ctx = cv.getContext('2d');
-  const cx = w / 2;
-  const cy = h / 2;
-
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, '#1a2a4a');
-  grad.addColorStop(0.5, '#4a6a8a');
-  grad.addColorStop(1, '#2a3a2a');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 12; i++) {
-    ctx.beginPath();
-    ctx.moveTo((i / 12) * w, 0);
-    ctx.lineTo((i / 12) * w, h);
-    ctx.stroke();
-  }
-  for (let i = 0; i <= 6; i++) {
-    ctx.beginPath();
-    ctx.moveTo(0, (i / 6) * h);
-    ctx.lineTo(w, (i / 6) * h);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = 'bold 48px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('FRONT', cx, h * 0.5);
-  ctx.fillText('PANORAMA 360°', cx, h * 0.3);
-  ctx.fillText('Загрузите панораму', cx, h * 0.7);
-
-  const tex = new THREE.CanvasTexture(cv);
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.ClampToEdgeWrapping;
-  return tex;
 }
 
 export function createEquirectDome(scene) {
   const geom = new THREE.SphereGeometry(
-    BASE_RADIUS, 128, 64,
+    CURVE_RADIUS, 128, 64,
     0, Math.PI * 2,
-    0, Math.PI * 0.5
+    0, DOME_PHI_MAX
   );
 
   const material = new THREE.ShaderMaterial({
@@ -198,7 +192,9 @@ export function createEquirectDome(scene) {
       panorama:   { value: generateEquirectDefault() },
       yaw:        { value: 0.0 },
       pitch:      { value: 0.0 },
-      domeFov:    { value: Math.PI },
+      domeFov:    { value: DOME_PHI_MAX },
+      maxTheta:   { value: DOME_PHI_MAX },
+      fitScale:   { value: DOME_FIT_SCALE },
       brightness: { value: 1.0 },
       gamma:      { value: 1.0 },
     },
@@ -225,10 +221,15 @@ export function createEquirectDome(scene) {
     getYaw()         { return material.uniforms.yaw.value; },
     getPitch()       { return material.uniforms.pitch.value; },
     getFov()         { return material.uniforms.domeFov.value; },
+    getDefaultFov()  { return DOME_PHI_MAX; },
+    setFitScale(v)   { material.uniforms.fitScale.value = v; },
+    getFitScale()    { return material.uniforms.fitScale.value; },
     setBrightness(v) { material.uniforms.brightness.value = v; },
     setGamma(v)      { material.uniforms.gamma.value = v; },
   };
 }
+
+/* ─── Генераторы текстур по умолчанию ─────────────────────── */
 
 function generateDefaultGrid() {
   const s = 1024;
@@ -272,6 +273,49 @@ function generateDefaultGrid() {
   ctx.arc(cx, cy, 4, 0, Math.PI * 2);
   ctx.fill();
 
+  return new THREE.CanvasTexture(cv);
+}
+
+function generateEquirectDefault() {
+  const w = 2048, h = 1024;
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext('2d');
+  const cx = w / 2, cy = h / 2;
+
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#1a2a4a');
+  grad.addColorStop(0.5, '#4a6a8a');
+  grad.addColorStop(1, '#2a3a2a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 12; i++) {
+    ctx.beginPath();
+    ctx.moveTo((i / 12) * w, 0);
+    ctx.lineTo((i / 12) * w, h);
+    ctx.stroke();
+  }
+  for (let i = 0; i <= 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(0, (i / 6) * h);
+    ctx.lineTo(w, (i / 6) * h);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = 'bold 48px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('FRONT', cx, h * 0.5);
+  ctx.fillText('PANORAMA 360°', cx, h * 0.3);
+  ctx.fillText('Загрузите панораму', cx, h * 0.7);
+
   const tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
   return tex;
 }

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createEquirectDome } from './dome.js';
+import { createEquirectDome, DOME_FIT_SCALE } from './dome.js';
 import { createRoom } from './room.js';
 import { setupCamera } from './camera.js';
 import { setupConverterUI } from './converter-ui.js';
@@ -63,6 +63,7 @@ const RENDER_FRAG = /* glsl */ `
   uniform float yaw;
   uniform float pitch;
   uniform float domeFov;
+  uniform float fitScale;
   varying vec2 vUv;
 
   mat3 rotY(float a) {
@@ -83,7 +84,14 @@ const RENDER_FRAG = /* glsl */ `
       return;
     }
 
-    float theta = r * domeFov * 0.5;
+    float r_tex = r * fitScale;
+
+    if (r_tex > 1.0) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      return;
+    }
+
+    float theta = r_tex * domeFov;
     float phi   = atan(pos.x, -pos.y) + PI;
 
     vec3 d = vec3(
@@ -115,6 +123,7 @@ function renderDomemaster(size) {
       yaw:      { value: dome.getYaw() },
       pitch:    { value: dome.getPitch() },
       domeFov:  { value: dome.getFov() },
+      fitScale: { value: dome.getFitScale?.() ?? DOME_FIT_SCALE },
     },
     vertexShader:   RENDER_VERT,
     fragmentShader: RENDER_FRAG,
