@@ -20,6 +20,7 @@ const CUBEMAP_TO_DOME_FRAG = /* glsl */ `
 
   void main() {
     vec2 pos = (1.0 - vUv) * 2.0 - 1.0;
+    pos.y = -pos.y;
     float r = length(pos);
 
     if (r > 1.0) {
