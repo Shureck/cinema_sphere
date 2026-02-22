@@ -67,6 +67,7 @@ window.addEventListener('resize', () => {
 });
 
 function animate() {
+  dome.update?.();
   cameraCtrl.update();
   media.update();
   ui.update();

@@ -90,6 +90,12 @@ function createUploadPanel(container, media) {
   convLink.textContent = '360° → Dome';
   convLink.style.textDecoration = 'none';
 
+  const perspLink = document.createElement('a');
+  perspLink.href = 'perspective.html';
+  perspLink.className = 'upload-btn';
+  perspLink.textContent = 'Перспектива';
+  perspLink.style.textDecoration = 'none';
+
   const publishBtn = el('button', 'upload-btn');
   publishBtn.textContent = 'Опубликовать';
   publishBtn.title = 'Загрузить на S3 и скопировать ссылку на сферу';
@@ -204,7 +210,7 @@ function createUploadPanel(container, media) {
     }
   };
 
-  panel.append(fileBtn, fileInput, urlBtn, testPhotoBtn, testGridBtn, publishBtn, convLink);
+  panel.append(fileBtn, fileInput, urlBtn, testPhotoBtn, testGridBtn, publishBtn, convLink, perspLink);
   wrap.append(toggleBtn, panel);
   container.appendChild(wrap);
   updatePublishBtn();
