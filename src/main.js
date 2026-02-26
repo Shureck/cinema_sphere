@@ -42,14 +42,21 @@ const ui         = setupUI(document.getElementById('ui-overlay'), {
   dome, cameraCtrl, media, room,
 });
 
-// Показывать кнопку VR только при поддержке WebXR, рядом с fullscreen
-if ('xr' in navigator) {
-  navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-    if (supported) {
-      const slot = document.querySelector('.vr-button-slot');
-      if (slot) slot.appendChild(VRButton.createButton(renderer));
-    }
-  });
+// Кнопка XR/VR — всегда показываем (на десктопе VRButton изначально ставит display:none)
+const vrSlot = document.querySelector('.vr-button-slot');
+if (vrSlot) {
+  vrSlot.appendChild(VRButton.createButton(renderer));
+  // VRButton скрывает кнопку до ответа isSessionSupported; принудительно показываем
+  const showVrButton = () => {
+    const el = vrSlot.querySelector('#VRButton') || vrSlot.querySelector('a');
+    if (el) el.style.display = '';
+  };
+  if ('xr' in navigator) {
+    navigator.xr.isSessionSupported('immersive-vr').then(showVrButton).catch(showVrButton);
+  } else {
+    showVrButton();
+  }
+  setTimeout(showVrButton, 500);
 }
 
 const params = new URLSearchParams(location.search);

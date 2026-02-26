@@ -52,20 +52,25 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-u
 .seat-map{position:absolute;left:16px;bottom:16px;width:160px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;border:1px solid rgba(255,255,255,.08);overflow:hidden;z-index:10;display:flex;flex-direction:column;align-items:center;padding-bottom:6px}
 @media (max-width:1024px){.seat-map{display:none!important}}
 
-/* ── Action buttons (fullscreen + VR) ─── */
-.action-buttons{position:absolute;bottom:16px;left:16px;display:flex;gap:8px;align-items:center;z-index:10}
+/* ── Action buttons (fullscreen + VR) — справа от карты, VR иконкой ─── */
+.action-buttons{position:absolute;bottom:16px;left:186px;display:flex;gap:8px;align-items:center;z-index:10}
+@media (max-width:1024px){.action-buttons{left:16px}}
 .fullscreen-btn{width:48px;height:48px;border-radius:12px;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .fullscreen-btn:hover{background:rgba(0,0,0,.75)}
 .vr-button-slot{display:flex;align-items:center}
-.vr-button-slot #VRButton{position:relative!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;margin:0!important}
+.vr-button-slot #VRButton,.vr-button-slot .vr-icon-btn{position:relative!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;margin:0!important;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:0!important;line-height:40px!important;box-sizing:border-box!important;background:rgba(0,0,0,.6)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)!important;border-radius:10px!important;color:#fff!important;cursor:pointer!important;z-index:10!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+.vr-button-slot #VRButton:hover,.vr-button-slot .vr-icon-btn:hover{background:rgba(0,0,0,.75)!important}
+.vr-button-slot #VRButton::before,.vr-button-slot .vr-icon-btn::before{content:'🥽';font-size:20px;flex-shrink:0}
+.vr-button-slot a{display:flex!important;align-items:center!important;justify-content:center!important;width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:0!important;text-decoration:none!important;color:#fff!important;overflow:hidden!important}
+.vr-button-slot a::before{content:'🥽';font-size:20px}
 .seat-map canvas{width:160px;height:160px;cursor:pointer}
 .minimap-center-btn{margin-top:4px;padding:4px 12px;font-size:11px}
 
 /* ── Help Text ─── */
 .help-text{position:absolute;bottom:16px;right:16px;font-size:11px;color:rgba(255,255,255,.3);text-align:right;line-height:1.7;user-select:none;z-index:10}
 
-/* ── WebXR VR Button ─── */
-#VRButton{margin:0!important;padding:8px 14px!important;height:48px!important;line-height:48px!important;box-sizing:border-box!important;background:rgba(0,0,0,.6)!important;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08)!important;border-radius:12px!important;color:#fff!important;font-size:13px!important;cursor:pointer!important;z-index:10!important}
+/* ── WebXR VR Button (иконка) ─── */
+#VRButton{margin:0!important}
 #VRButton:hover{background:rgba(0,0,0,.75)!important}
 
 /* ── Fullscreen: скрыть весь UI ─── */
