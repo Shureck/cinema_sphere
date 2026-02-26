@@ -10,6 +10,8 @@ import { setupUI } from './ui.js';
 const EYE_HEIGHT_SITTING = 1.2;
 /** Высота поверхности сиденья над полом ряда (м), по геометрии room.js: cushion y ≈ 0.375 */
 const SEAT_SURFACE_HEIGHT = 0.45;
+/** Дополнительное смещение камеры VR вверх (м) */
+const VR_HEIGHT_OFFSET = 1;
 /** Позиция заднего ряда (как в room.js: z=10, y=0) */
 const VR_BACK_ROW_Z = 10;
 const VR_BACK_ROW_Y = 0;
@@ -47,7 +49,7 @@ renderer.xr.addEventListener('sessionstart', async () => {
   xrRig.rotation.y = Math.PI;
   const baseRef = renderer.xr.getReferenceSpace();
   if (baseRef && typeof baseRef.getOffsetReferenceSpace === 'function') {
-    const eyeY = VR_BACK_ROW_Y + SEAT_SURFACE_HEIGHT + EYE_HEIGHT_SITTING;
+    const eyeY = VR_BACK_ROW_Y + SEAT_SURFACE_HEIGHT + EYE_HEIGHT_SITTING + VR_HEIGHT_OFFSET;
     const offset = new XRRigidTransform({ x: 0, y: -eyeY, z: -VR_BACK_ROW_Z });
     renderer.xr.setReferenceSpace(baseRef.getOffsetReferenceSpace(offset));
   }
