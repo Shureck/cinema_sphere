@@ -6,6 +6,10 @@ import { setupCamera } from './camera.js';
 import { setupMedia } from './media.js';
 import { setupUI } from './ui.js';
 
+/** Высота глаз сидящего человека (м) — для камеры и смещения VR */
+const EYE_HEIGHT_SITTING = 1.2;
+/** Вертикальный FOV, близкий к человеческому (~60°) */
+const HUMAN_VERTICAL_FOV = 60;
 
 const canvas   = document.getElementById('dome-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -18,7 +22,7 @@ const scene  = new THREE.Scene();
 scene.background = new THREE.Color(0x050508);
 
 const camera = new THREE.PerspectiveCamera(
-  80, window.innerWidth / window.innerHeight, 0.1, 200,
+  HUMAN_VERTICAL_FOV, window.innerWidth / window.innerHeight, 0.1, 200,
 );
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.45));
@@ -34,8 +38,18 @@ scene.add(xrRig);
 const dome       = createDome(xrRig);
 const room       = createRoom(xrRig);
 
-renderer.xr.addEventListener('sessionstart', () => { xrRig.rotation.y = Math.PI; });
-renderer.xr.addEventListener('sessionend', () => { xrRig.rotation.y = 0; });
+renderer.xr.addEventListener('sessionstart', async () => {
+  xrRig.rotation.y = Math.PI;
+  const baseRef = renderer.xr.getReferenceSpace();
+  if (baseRef && typeof baseRef.getOffsetReferenceSpace === 'function') {
+    const offset = new XRRigidTransform({ x: 0, y: -EYE_HEIGHT_SITTING, z: 0 });
+    renderer.xr.setReferenceSpace(baseRef.getOffsetReferenceSpace(offset));
+  }
+});
+renderer.xr.addEventListener('sessionend', () => {
+  xrRig.rotation.y = 0;
+  renderer.xr.setReferenceSpace(null);
+});
 const cameraCtrl = setupCamera(camera, canvas, room.seats);
 const media      = setupMedia(dome);
 const ui         = setupUI(document.getElementById('ui-overlay'), {
