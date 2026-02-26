@@ -8,6 +8,9 @@ import { setupUI } from './ui.js';
 
 /** Высота глаз сидящего человека (м) — для камеры и смещения VR */
 const EYE_HEIGHT_SITTING = 1.2;
+/** Позиция заднего ряда (как в room.js: z=10, y=0 — ряд выше по залу) */
+const VR_BACK_ROW_Z = 10;
+const VR_BACK_ROW_Y = 0;
 /** Вертикальный FOV, близкий к человеческому (~60°) */
 const HUMAN_VERTICAL_FOV = 60;
 
@@ -42,7 +45,8 @@ renderer.xr.addEventListener('sessionstart', async () => {
   xrRig.rotation.y = Math.PI;
   const baseRef = renderer.xr.getReferenceSpace();
   if (baseRef && typeof baseRef.getOffsetReferenceSpace === 'function') {
-    const offset = new XRRigidTransform({ x: 0, y: -EYE_HEIGHT_SITTING, z: 0 });
+    const eyeY = VR_BACK_ROW_Y + EYE_HEIGHT_SITTING;
+    const offset = new XRRigidTransform({ x: 0, y: -eyeY, z: -VR_BACK_ROW_Z });
     renderer.xr.setReferenceSpace(baseRef.getOffsetReferenceSpace(offset));
   }
 });
